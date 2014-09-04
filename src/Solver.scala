@@ -7,14 +7,16 @@ object Solver {
   // game and search parameters
   val newCellValues = List((0.9,2), (0.1,4))
   val directions = List(UP, RIGHT, DOWN, LEFT)
-  val searchDepth = 3
+  val searchDepth = 2
 
   // statistics
-  val statisticsIntervalMillis = 10000
+  val statisticsIntervalMillis = 1000
   var fieldsEvaluated = 0L
   var movesMade = 0L
   var startTime = 0L
   var lastReport = 0L
+  var totalMoves = 0L
+  var totalFields = 0L
 
   // all possible moves from the state in direction
   def possibleMoves(direction : Direction, state : State) : Iterable[(Double, State)] = {
@@ -60,10 +62,13 @@ object Solver {
     }))).filter(_._2>=0)
 
   def playGame(state : State) : List[(Direction, State)] = {
+    totalMoves = 0
+    totalFields = 0
     fieldsEvaluated = 0
     movesMade = 0
     startTime = System.currentTimeMillis()
     lastReport = startTime
+    printHeader()
     playByItself(state, List())
   }
 
@@ -86,14 +91,19 @@ object Solver {
     }
   }
 
+  def printHeader() : Unit = {
+    println(s"        Time   Moves         Fields  Move/sec      Field/sec  Avg Move/sec  Avg Field/sec")
+  }
+
   def printStats() : Unit = {
     if ((System.currentTimeMillis()-lastReport)>statisticsIntervalMillis) {
       val timeTaken = (System.currentTimeMillis()-startTime)/1000.0
-      println(s"Time             ${timeTaken/60} minutes")
-      println(s"Moves made       $movesMade")
-      println(s"Fields evaluated $fieldsEvaluated")
-      println(s"Performance      ${movesMade/timeTaken} moves/sec")
-      println(s"                 ${fieldsEvaluated/timeTaken} fields/sec")
+      val timeSinceLast = (System.currentTimeMillis()-lastReport)/1000.0
+      totalMoves += movesMade
+      totalFields += fieldsEvaluated
+      println(f"${timeTaken/60}%12.2f $totalMoves%7d $totalFields%14d ${movesMade/timeSinceLast}%9.4f ${fieldsEvaluated/timeSinceLast}%14f ${totalMoves/timeTaken}%13.4f ${totalFields/timeTaken}%14f")
+      movesMade = 0
+      fieldsEvaluated = 0
       lastReport = System.currentTimeMillis()
     }
   }
