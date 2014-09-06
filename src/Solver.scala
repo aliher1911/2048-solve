@@ -7,7 +7,7 @@ object Solver {
   // game and search parameters
   val newCellValues = List((0.9,2), (0.1,4))
   val directions = List(UP, RIGHT, DOWN, LEFT)
-  val searchDepth = 2
+  val searchDepth = 3
 
   // statistics
   val statisticsIntervalMillis = 1000
@@ -32,6 +32,7 @@ object Solver {
   }
 
   def freeSpaceEvaluator(state : State) : Double = state.board.data.count(_==0)
+  def scoreEvaluator(state : State) : Double = state.score
 
   // find solution - find best dir
   def findSolution(state : State, depth : Int, evaluator : State => Double) : Direction = {
@@ -69,17 +70,17 @@ object Solver {
     startTime = System.currentTimeMillis()
     lastReport = startTime
     printHeader()
-    playByItself(state, List())
+    playByItself(state, scoreEvaluator, List())
   }
 
   // play game and build path of this game as a result
-  def playByItself(state : State, history : List[(Direction, State)]) : List[(Direction, State)] = {
-    val solution = findSolution(state, searchDepth, freeSpaceEvaluator)
+  def playByItself(state : State, evaluator : State => Double, history : List[(Direction, State)]) : List[(Direction, State)] = {
+    val solution = findSolution(state, searchDepth, evaluator)
     movesMade += 1
     move(solution, state) match {
       case Success(nextState) =>
         printStats()
-        playByItself(nextState, (solution, nextState) :: history)
+        playByItself(nextState, evaluator, (solution, nextState) :: history)
       case Win(nextState) =>
         (solution, nextState) :: history
       case Loss(nextState) =>
